@@ -121,7 +121,7 @@
 
 							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
 							
-							<input type="submit" value="Post"/>
+							<input type="submit" class="btn btn-primary" value="Submit" />
 						</fieldset>
 					</form>
 				<?php } ?>
@@ -131,7 +131,6 @@
 				<div class="jumbotron">
 					<h1>Super awesome marketing speak!</h1>
 					<p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-					<a class="btn btn-large btn-success" href="#">Sign up today</a>
 				</div>
 
 				<table class="table table-hover">
@@ -176,7 +175,7 @@
 							<label>Topic Text</label>
 							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
 							
-							<input type="submit" value="Post"/>
+							<input type="submit" class="btn btn-primary" value="Submit" />
 						</fieldset>
 					</form>
 				<?php } ?>
@@ -264,6 +263,6 @@
 
 	});
 	</script>
-	
+
 </body>
 </html>

@@ -10,5 +10,7 @@ Download the system, edit `forum.php`, and enjoy!
 
 ![ScreenShot](http://i.imgur.com/jMxc8.png)
 
+### [Demo System](http://talk.davidpennington.me/) (without admin controls)
+
 [David Pennington](http://davidpennington.me)
 [MIT License](http://david.mit-license.org/)

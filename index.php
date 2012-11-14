@@ -93,7 +93,7 @@
 				<p><?php print $o['b']; ?></p>
 
 				<?php if($_SESSION['admin']) {?>
-					<a class="btn btn-danger" href="/?d=t&t=<?php print $o['i']; ?>">delete</a>
+					<?php print $o['e']; ?> - <a class="btn btn-danger" href="/?d=t&t=<?php print $o['i']; ?>">delete</a>
 				<?php } ?>
 
 				<hr>
@@ -107,7 +107,7 @@
 							<p><?php print $row['b']; ?></p>
 							
 							<?php if($_SESSION['admin']) {?>
-								<p><a href="/?d=c&c=<?php print $row['i']; ?>&t=<?php print $o['i']; ?>">delete</a></p>
+								<p><?php print $row['e']; ?> - <a href="/?d=c&c=<?php print $row['i']; ?>&t=<?php print $o['i']; ?>">delete</a></p>
 							<?php } ?>
 						</div>
 
@@ -153,9 +153,9 @@
 							<td>
 								<a href="?t=<?php print $row['i']; ?>"><?php print $row['h']; ?></a><br>
 								
-								<?php print $row['e']; ?> - 
+								
 								<?php if($_SESSION['admin']) {?>
-									<a href="/?d=t&t=<?php print $row['i']; ?>">delete</a>
+									<?php print $row['e']; ?> - <a href="/?d=t&t=<?php print $row['i']; ?>">delete</a>
 								<?php } ?>
 							</td>
 						</tr>

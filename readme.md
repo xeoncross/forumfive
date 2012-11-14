@@ -8,5 +8,7 @@ Requires the system to be in the root directory `/` of the site. If you already 
 
 Download the system, edit `forum.php`, and enjoy!
 
+![ScreenShot](http://i.imgur.com/jMxc8.png)
+
 [David Pennington](http://davidpennington.me)
 [MIT License](http://david.mit-license.org/)

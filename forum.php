@@ -84,7 +84,7 @@ if( ! is_file(DB))
 	{
 		$id = i('t', array(
 			'o' => $s + $i,
-			'c' => $s + $i,
+			'c' => $s + WAIT + $i,
 			'a' => $p,
 			'e' => 'user@example.com',
 			'h' => "This is a topic about $i stuff",
@@ -94,7 +94,7 @@ if( ! is_file(DB))
 		{ 
 			i('c', array(
 				'o' => $id,
-				'c' => $s + $x,
+				'c' => $s + WAIT + $x,
 				'a' => $p,
 				'e' => 'user@example.com',
 				'b' => 'This is comment '. $x));

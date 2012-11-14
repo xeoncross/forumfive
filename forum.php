@@ -170,7 +170,7 @@ if($b && $_SESSION['email'])
 	else
 	{
 		$d['h'] = c($h);
-		if( ! $d['h']) return new Exception('HEADER');
+		if( ! $d['h'] OR mb_strlen($d['h']) > 80) return new Exception('HEADER');
 	}
 
 	i($t?'c':'t', $d);

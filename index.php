@@ -229,7 +229,7 @@
 					success: function(res, status, xhr)
 					{
 						//console.log(res);
-						window.location.reload();
+						window.location.href = window.location.href;
 					},
 					error: function(xhr, status, err)
 					{
@@ -237,13 +237,12 @@
 					}
 				});
 			},
-			onlogout: function() {
-
-				window.location.reload();
-
+			onlogout: function()
+			{
 				// Delete the session cookie
 				var date = new Date();
 				document.cookie = "<?php print session_name(); ?>=; expires="+date.toGMTString()+"; path=/";
+				window.location.href = window.location.href;
 			}
 		});
 

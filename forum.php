@@ -49,13 +49,14 @@ function c($s)
 session_start();
 $_SESSION += array('email' => '', 'admin' => '', 'check' => '');
 
+$s = time();
+$p = getenv('REMOTE_ADDR');
+
 if( ! $_SESSION['check'])
 {
-	checkdnsrr(join('.',array_reverse(explode('.',$p=getenv('REMOTE_ADDR')))).".opm.tornevall.org","A") && die('Bot');
+	checkdnsrr(join('.',array_reverse(explode('.',$p))).".opm.tornevall.org","A") && die('Bot');
 	$_SESSION['check'] = 1;
 }
-
-$s = time();
 
 // $t = Topic ID
 // $h = Topic Headline

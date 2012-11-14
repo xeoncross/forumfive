@@ -3,6 +3,8 @@
 //error_reporting(E_ALL);
 //ini_set('display_errors', true);
 
+// PHP 5 requires a default timezone to be set
+date_default_timezone_set('GMT');
 // Place the DB files outside of the public web directory so people don't download it!
 define('DB', '../db.sq3');
 // Number of seconds a user must wait to post more than two topics or comments
@@ -54,7 +56,6 @@ if( ! $_SESSION['check'])
 }
 
 $s = time();
-$p = getenv('REMOTE_ADDR');
 
 // $t = Topic ID
 // $h = Topic Headline
@@ -66,7 +67,7 @@ extract($_REQUEST + array('b' => 0, 'h' => 0, 't' => 0, 'c' => 0, 'a' => 0, 'd' 
 
 if( ! is_file(DB))
 {
-	unlink(DB);
+	//unlink(DB);
 
 	/*
 	 * (T)opic's and (C)omments

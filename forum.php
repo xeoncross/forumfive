@@ -14,88 +14,78 @@ define('ADMIN', ' you@example.com yourfriend@example.com');
 
 function db()
 {
-	static $d;
-	return $d = $d ?: (new PDO('sqlite:'.DB,0,0,array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION)));
+	static $db;
+	return $db = $db ?: (new PDO('sqlite:'.DB,0,0,array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION)));
 }
 
-function q($q, $p=NULL)
+function query($sql, $params = NULL)
 {
-	/*echo "<pre>$q</pre>";*/$s=db()->prepare($q);$s->execute(array_values((array)$p)); return $s;
+	/*echo "<pre>$q</pre>";*/$s=db()->prepare($sql);$s->execute(array_values((array) $params)); return $s;
 }
 
-function i($t, $d)
+function insert($table, $data)
 {
-	q("INSERT INTO $t(" . join(',', array_keys($d)) . ')VALUES('
-		. str_repeat('?,', count($d)-1). '?)', $d);
+	query("INSERT INTO $table(" . join(',', array_keys($data)) . ')VALUES('
+		. str_repeat('?,', count($data)-1). '?)', $data);
 	return db()->lastInsertId();
 }
 
-function u($t, $d, $v)
+function update($table, $data, $value)
 {
-	return q("UPDATE $t SET ". join('`=?,`', array_keys($d))
-		. "=?WHERE i=?", $d + array($v))->rowCount();
+	return query("UPDATE $table SET ". join('`=?,`', array_keys($data))
+		. "=?WHERE i=?", $data + array($value))->rowCount();
 }
 
-function d($t, $c, $v)
+function delete($table, $field, $value)
 {
-	return q("DELETE FROM $t WHERE $c=?", $v)->rowCount();
+	return query("DELETE FROM $table WHERE $field = ?", $value)->rowCount();
 }
 
-function c($s)
+function filter($string)
 {
-	return nl2br(htmlspecialchars(trim(@iconv('UTF-8', 'UTF-8//TRANSLIT//IGNORE', $s))));
+	return nl2br(htmlspecialchars(trim(@iconv('UTF-8', 'UTF-8//TRANSLIT//IGNORE', $string))));
 }
 
 session_start();
 $_SESSION += array('email' => '', 'admin' => '', 'check' => '');
-
-$s = time();
-$p = getenv('REMOTE_ADDR');
+$ip = getenv('REMOTE_ADDR');
 
 if( ! $_SESSION['check'])
 {
-	checkdnsrr(join('.',array_reverse(explode('.',$p))).".opm.tornevall.org","A") && die('Bot');
+	checkdnsrr(join('.',array_reverse(explode('.',$ip))).".opm.tornevall.org","A") && die('Bot');
 	$_SESSION['check'] = 1;
 }
 
-// $t = Topic ID
-// $h = Topic Headline
-// $b = Topic/Comment Body
-// $c = Comment ID
-// $a = Auth assertion request (Login)
-// $d = Delete request
-extract($_REQUEST + array('b' => 0, 'h' => 0, 't' => 0, 'c' => 0, 'a' => 0, 'd' => 0));
+// Append to the array: Topic ID, Topic Headline, Topic/Comment Body, Comment ID, Delete request
+extract($_REQUEST + array('topicID' => 0, 'headline' => 0, 'body' => 0, 'commentID' => 0, 'delete' => 0));
 
 if( ! is_file(DB))
 {
 	//unlink(DB);
 
 	/*
-	 * (T)opic's and (C)omments
-	 * ID, Created Timestamp, IP Address, Email, Body Text
-	 * o = Parent ID (if Comment) OR o = last modified (for ranking if Topic)
+	 * Topic: (I)D, (O) Last Modified, (C)reated Timestamp, IP (A)ddress, (E)mail, (H)eadline, (B)ody Text
+	 * Comment: (I)D, (O) Topic ID, (C)reated Timestamp, IP (A)ddress, (E)mail, (B)ody Text
 	 */
-	$t='CREATE TABLE t (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, h TEXT, b TEXT)';
-	q($t);
-	$t='CREATE TABLE c (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, b TEXT)';
-	q($t);
+	query('CREATE TABLE t (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, h TEXT, b TEXT)');
+	query('CREATE TABLE c (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, b TEXT)');
 	
 	for ($i=0; $i < 3; $i++)
 	{
-		$id = i('t', array(
-			'o' => $s + $i,
-			'c' => $s + WAIT + $i,
-			'a' => $p,
+		$id = insert('t', array(
+			'o' => time() + $i,
+			'c' => time() + WAIT + $i,
+			'a' => $ip,
 			'e' => 'user@example.com',
 			'h' => "This is a topic about $i stuff",
 			'b' => 'This is topic '. $i));
 		
 		for ($x=0; $x < 5; $x++)
 		{ 
-			i('c', array(
+			insert('c', array(
 				'o' => $id,
-				'c' => $s + WAIT + $x,
-				'a' => $p,
+				'c' => time() + WAIT + $x,
+				'a' => $ip,
 				'e' => 'user@example.com',
 				'b' => 'This is comment '. $x));
 		}
@@ -125,56 +115,56 @@ if(isset($_POST['a']))
 }
 
 // Trying to delete a topic/comment?
-if($d && $_SESSION['admin'])
+if($delete && $_SESSION['admin'])
 {
 	// Also delete the comments that belong to this topic
-	if($d == 't')
+	if($delete == 't')
 	{
-		d('c', 'o', $t);
-		d('t', 'i', $t);
+		delete('c', 'o', $topicID);
+		delete('t', 'i', $topicID);
 
 		return new Exception("REMOVED");
 	}
-	else if($c)
+	else if($commentID)
 	{
-		d('c', 'i', $c);
+		delete('c', 'i', $commentID);
 	}
 }
 
 // Fetch the topic if we are loading it
-if($t && !($o = q('SELECT * FROM t WHERE i=?',$t)->fetch()))
+if($topicID && !($topic = query('SELECT * FROM t WHERE i=?',$topicID)->fetch()))
 {
 	return new Exception("MISSING");
 }
 
 // We are inserting a new topic or comment
-if($b && $_SESSION['email'])
+if($body && $_SESSION['email'])
 {
-	$h = c($h);
+	$headline = filter($headline);
 
 	// Make sure they haven't posted more than twice every 3 minutes
-	if(q('SELECT COUNT(*) FROM '. ($t?'t':'c').' WHERE a=? AND c>?', array($p, $s-WAIT))->fetchColumn() > 2)
+	if(query('SELECT COUNT(*) FROM '. ($topicID ? 't' : 'c').' WHERE a=? AND c>?', array($ip, time()-WAIT))->fetchColumn() > 2)
 	{
 		return new Exception("OFTEN");
 	}
 
 	// Assume we are inserting a topic
-	$d = array('o' => $s, 'c' => $s, 'a' => $p, 'e' => $_SESSION['email'], 'b' => c($b));
+	$data = array('o' => time(), 'c' => time(), 'a' => $ip, 'e' => $_SESSION['email'], 'b' => filter($body));
 
-	// If this is a comment, then update the topic modified and add a reference to the topic
-	if($t)
+	// If this is a comment, add a reference to the topic, then update the topic modified time
+	if($topicID)
 	{ 
-		$d['o'] = $t;
-		u('t', array('o' => $s), $t);
+		$data['o'] = $topicID;
+		update('t', array('o' => time()), $topicID);
 	}
 	else
 	{
-		$d['h'] = c($h);
-		if( ! $d['h'] OR mb_strlen($d['h']) > 80) return new Exception('HEADER');
+		$data['h'] = filter($headline);
+		if( ! $data['h'] OR mb_strlen($data['h']) > 80) return new Exception('HEADER');
 	}
 
-	i($t?'c':'t', $d);
+	insert($topicID ? 'c' : 't', $data);
 }
 
 // We are showing a topic
-$rows = $t ? q('SELECT * FROM c WHERE o=? ORDER BY o DESC', array($t)) : q('SELECT * FROM t ORDER BY o DESC');
+$rows = $topicID ? query('SELECT * FROM c WHERE o=? ORDER BY o DESC', array($topicID)) : query('SELECT * FROM t ORDER BY o DESC');

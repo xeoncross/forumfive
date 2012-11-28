@@ -86,14 +86,14 @@
 			
 		<?php if(! $exception instanceof \Exception) { ?>
 
-			<?php if($t) { ?>
+			<?php if($topicID) { ?>
 
-				<h3><?php print $o['h']; ?></h3>
+				<h3><?php print $topic['h']; ?></h3>
 
-				<p><?php print $o['b']; ?></p>
+				<p><?php print $topic['b']; ?></p>
 
 				<?php if($_SESSION['admin']) {?>
-					<?php print $o['e']; ?> - <a class="btn btn-danger" href="/?d=t&t=<?php print $o['i']; ?>">delete</a>
+					<?php print $topic['e']; ?> - <a class="btn btn-danger" href="/?d=t&topicID=<?php print $topic['i']; ?>">delete</a>
 				<?php } ?>
 
 				<hr>
@@ -107,7 +107,7 @@
 							<p><?php print $row['b']; ?></p>
 							
 							<?php if($_SESSION['admin']) {?>
-								<p><?php print $row['e']; ?> - <a href="/?d=c&c=<?php print $row['i']; ?>&t=<?php print $o['i']; ?>">delete</a></p>
+								<p><?php print $row['e']; ?> - <a href="/?d=c&commentID=<?php print $row['i']; ?>&topicID=<?php print $topic['i']; ?>">delete</a></p>
 							<?php } ?>
 						</div>
 
@@ -153,11 +153,11 @@
 								<img src="http://www.gravatar.com/avatar/<?php echo md5($row['e']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
 							</td>
 							<td>
-								<a href="?t=<?php print $row['i']; ?>"><?php print $row['h']; ?></a><br>
+								<a href="?topicID=<?php print $row['i']; ?>"><?php print $row['h']; ?></a><br>
 								
 								
 								<?php if($_SESSION['admin']) {?>
-									<?php print $row['e']; ?> - <a href="/?d=t&t=<?php print $row['i']; ?>">delete</a>
+									<?php print $row['e']; ?> - <a href="/?d=t&topicID=<?php print $row['i']; ?>">delete</a>
 								<?php } ?>
 							</td>
 						</tr>

@@ -1,26 +1,41 @@
 <?php
 
-//error_reporting(E_ALL);
-//ini_set('display_errors', true);
+// Error default reporting
+//error_reporting(E_ALL ^ E_NOTICE);
+
+// Enable the error display
+//ini_set('display_errors', 'On');
+
+// Disable PHP error logs
+//ini_set('log_errors', 'Off');
 
 // PHP 5 requires a default timezone to be set
 date_default_timezone_set('GMT');
+
 // Place the DB files outside of the public web directory so people don't download it!
-define('DB', '../db.sq3');
+define('DB', dirname(dirname(__FILE__)) . '/database.sq3');
+
 // Number of seconds a user must wait to post more than two topics or comments
 define('WAIT', 180);
+
 // List of emails for admin users
 define('ADMIN', ' you@example.com yourfriend@example.com');
 
-function db()
+function db($args = array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION))
 {
 	static $db;
-	return $db = $db ?: (new PDO('sqlite:'.DB,0,0,array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION)));
+
+    $db = ($db instanceof PDO) ?: new PDO('sqlite:' . DB, 0, 0, $args);
+
+	return $db;
 }
 
 function query($sql, $params = NULL)
 {
-	/*echo "<pre>$q</pre>";*/$s=db()->prepare($sql);$s->execute(array_values((array) $params)); return $s;
+	$s = db()->prepare($sql);
+	$s->execute(array_values((array) $params));
+
+	return $s;
 }
 
 function insert($table, $data)
@@ -69,7 +84,7 @@ if( ! is_file(DB))
 	 */
 	query('CREATE TABLE t (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, h TEXT, b TEXT)');
 	query('CREATE TABLE c (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, b TEXT)');
-	
+
 	for ($i=0; $i < 3; $i++)
 	{
 		$id = insert('t', array(
@@ -79,9 +94,9 @@ if( ! is_file(DB))
 			'e' => 'user@example.com',
 			'h' => "This is a topic about $i stuff",
 			'b' => 'This is topic '. $i));
-		
+
 		for ($x=0; $x < 5; $x++)
-		{ 
+		{
 			insert('c', array(
 				'o' => $id,
 				'c' => time() + WAIT + $x,
@@ -153,7 +168,7 @@ if($body && $_SESSION['email'])
 
 	// If this is a comment, add a reference to the topic, then update the topic modified time
 	if($topicID)
-	{ 
+	{
 		$data['o'] = $topicID;
 		update('t', array('o' => time()), $topicID);
 	}

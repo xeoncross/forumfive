@@ -24,9 +24,7 @@ define('ADMIN', ' you@example.com yourfriend@example.com');
 function db($args = array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION))
 {
 	static $db;
-
-    $db = ($db instanceof PDO) ?: new PDO('sqlite:' . DB, 0, 0, $args);
-
+	$db = $db ?: (new PDO('sqlite:' . DB, 0, 0, $args));
 	return $db;
 }
 
@@ -34,7 +32,6 @@ function query($sql, $params = NULL)
 {
 	$s = db()->prepare($sql);
 	$s->execute(array_values((array) $params));
-
 	return $s;
 }
 

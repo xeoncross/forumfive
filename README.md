@@ -1,4 +1,4 @@
-# Forum Five
+# ForumFive
 
 A lightweight PHP forum system in less than 5kB. Features email login system, DNSBL checking, rate-limiting, IP logging, moderator tools, and a nice clean interface.
 
@@ -14,7 +14,3 @@ Download the system, edit `forum.php`, and enjoy!
 
 [David Pennington](http://davidpennington.me)
 [MIT License](http://david.mit-license.org/)
-
-* * *
-
-# Forked from XeonCross original [repository](https://github.com/Xeoncross/forumfive).

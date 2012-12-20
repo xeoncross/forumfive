@@ -1,66 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
 	<title>Forum Five</title>
 
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta name="description" content="Small, lightweight forum system">
-	<meta name="author" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta name="keywords" content="forum, five, lightweight, forum system, forumfive, fast, simple"
+	<meta name="description" content="Small, simple and lightweight forum system write in PHP" />
+	<meta name="generator" content="Forum Five" />
 
-	<link href="bootstrap/css/bootstrap.css" rel="stylesheet">
-
-	<style type="text/css">
-		body {
-			padding-top: 20px;
-			padding-bottom: 40px;
-		}
-
-		/* Custom container */
-		.container-narrow {
-			margin: 0 auto;
-			max-width: 700px;
-		}
-		.container-narrow > hr {
-			margin: 30px 0;
-		}
-
-		/* Main marketing message and sign up button */
-		.jumbotron {
-			margin: 60px 0;
-			text-align: center;
-		}
-		.jumbotron h1 {
-			font-size: 72px;
-			line-height: 1;
-		}
-		.jumbotron .btn {
-			font-size: 21px;
-			padding: 14px 24px;
-		}
-
-		/* Supporting marketing content */
-		.marketing {
-			margin: 60px 0;
-		}
-		.marketing p + h4 {
-			margin-top: 28px;
-		}
-	</style>
-
-	<link href="bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+	<link href="assets/css/bootstrap.css" rel="stylesheet">
+	<link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
+	<link href="assets/css/style.css" rel="stylesheet">
 
 	<!--[if lt IE 9]>
 		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
 	<![endif]-->
-
 </head>
 <body>
 
 	<div class="container-narrow">
 
 		<?php $exception = require('forum.php'); ?>
-		
+
 		<div class="masthead">
 			<ul class="nav nav-pills pull-right">
 				<li><a href="/">Home</a></li>
@@ -77,13 +39,13 @@
 				</li>
 			</ul>
 
-			<h3 class="muted">Forum Five</h3>
+			<h3 class="muted"><a href="/" target="_self" title="Website index">Forum Five</a></h3>
 		</div>
 
 		<hr>
 
 		<div class="marketing">
-			
+
 		<?php if(! $exception instanceof \Exception) { ?>
 
 			<?php if($topicID) { ?>
@@ -97,15 +59,15 @@
 				<?php } ?>
 
 				<hr>
-				
+
 				<div id="comments">
 					<?php foreach($rows->fetchAll() as $row) { ?>
 
 						<div class="clearfix content-heading comment">
 							<img class="pull-left img-polaroid" src="http://www.gravatar.com/avatar/<?php echo md5($row['e']); ?>?s=40&r=g&d=mm" style="margin-right: .7em;" />
-							
+
 							<p><?php print $row['b']; ?></p>
-							
+
 							<?php if($_SESSION['admin']) {?>
 								<p><?php print $row['e']; ?> - <a href="/?d=c&commentID=<?php print $row['i']; ?>&topicID=<?php print $topic['i']; ?>">delete</a></p>
 							<?php } ?>
@@ -122,14 +84,14 @@
 							<legend>Leave a reply</legend>
 
 							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
-							
+
 							<input type="submit" class="btn btn-primary" value="Submit" />
 						</fieldset>
 					</form>
 				<?php } ?>
 
 			<?php } else { ?>
-				
+
 				<div class="jumbotron">
 					<h1>Super awesome marketing speak!</h1>
 					<p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
@@ -154,8 +116,8 @@
 							</td>
 							<td>
 								<a href="?topicID=<?php print $row['i']; ?>"><?php print $row['h']; ?></a><br>
-								
-								
+
+
 								<?php if($_SESSION['admin']) {?>
 									<?php print $row['e']; ?> - <a href="/?d=t&topicID=<?php print $row['i']; ?>">delete</a>
 								<?php } ?>
@@ -173,10 +135,10 @@
 
 							<label>Topic Title</label>
 							<input type="text" name="h" />
-							
+
 							<label>Topic Text</label>
 							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
-							
+
 							<input type="submit" class="btn btn-primary" value="Submit" />
 						</fieldset>
 					</form>
@@ -212,9 +174,9 @@
 
 	</div>
 
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 	<script src="https://login.persona.org/include.js"></script>
-	<script src="/bootstrap/js/bootstrap.min.js"></script>
+	<script src="assets/js/bootstrap.min.js"></script>
 
 	<script>
 	$(function()

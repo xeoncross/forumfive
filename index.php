@@ -46,7 +46,7 @@
 
 		<div class="marketing">
 
-		<?php if(! $exception instanceof \Exception) { ?>
+		<?php if(! $exception instanceof Exception) { ?>
 
 			<?php if($topicID) { ?>
 
@@ -146,7 +146,7 @@
 
 			<?php } ?>
 
-		<?php } elseif($exception instanceof \Exception) { //var_dump($exception); //$e = $exception; //catch(Exception $e) { ?>
+		<?php } elseif($exception instanceof Exception) { //var_dump($exception); //$e = $exception; //catch(Exception $e) { ?>
 
 			<div id="exception">
 				<?php if($exception->getMessage() == 'MISSING') { ?>

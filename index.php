@@ -169,7 +169,7 @@
 		<hr>
 
 		<div class="footer">
-			<p>&copy; <?php print date('Y'); ?> <?php print htmlspecialchars(getenv('HTTP_HOST')); ?> - <?php print $_SESSION['email']; ?></p>
+			<p>&copy; <?php print date('Y'); ?> <?php print htmlspecialchars(getenv('HTTP_HOST')); ?> - Powered by <a href="https://github.com/Xeoncross/forumfive">forumfive</a> - <?php print $_SESSION['email']; ?></p>
 		</div>
 
 	</div>

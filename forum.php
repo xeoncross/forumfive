@@ -155,7 +155,7 @@ if($body && $_SESSION['email'])
 	$headline = filter($headline);
 
 	// Make sure they haven't posted more than twice every 3 minutes
-	if(query('SELECT COUNT(*) FROM '. ($topicID ? 't' : 'c').' WHERE a=? AND c>?', array($ip, time()-WAIT))->fetchColumn() > 2)
+	if(query('SELECT COUNT(*) FROM '. ($topicID ? 'c' : 't').' WHERE a=? AND c>?', array($ip, time()-WAIT))->fetchColumn() > 2)
 	{
 		return new Exception("OFTEN");
 	}

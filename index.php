@@ -1,76 +1,187 @@
+<?php $exception = require('forum.php'); ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8"> 
-	<title>Forum Five</title>
-
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<meta name="keywords" content="forum, five, lightweight, forum system, forumfive, fast, simple"
+	<meta charset="utf-8">
+	<!-- for Persona on IE -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Small, simple and lightweight forum system write in PHP" />
 	<meta name="generator" content="Forum Five" />
+	<meta name="author" content="">
 
-	<link href="assets/css/bootstrap.css" rel="stylesheet">
-	<link href="assets/css/bootstrap-responsive.css" rel="stylesheet">
-	<link href="assets/css/style.css" rel="stylesheet">
+	<title><?php if(!empty($topic)) print $topic['title'] . ' - '; ?>Forum Five</title>
 
+	<!-- Bootstrap core CSS -->
+	<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" />
+
+	<!-- Custom styles for this template -->
+	<style type="text/css">
+	/* Space out content a bit */
+	body {
+		padding-top: 20px;
+		padding-bottom: 20px;
+	}
+
+	/* Everything but the jumbotron gets side spacing for mobile first views */
+	.header,
+	.marketing,
+	.footer {
+		padding-right: 15px;
+		padding-left: 15px;
+	}
+
+	/* Custom page header */
+	.header {
+		border-bottom: 1px solid #e5e5e5;
+	}
+	/* Make the masthead heading the same height as the navigation */
+	.header h3 {
+		padding-bottom: 19px;
+		margin-top: 0;
+		margin-bottom: 0;
+		line-height: 40px;
+	}
+
+	/* Custom page footer */
+	.footer {
+		padding-top: 19px;
+		color: #777;
+		border-top: 1px solid #e5e5e5;
+	}
+
+	/* Customize container */
+	@media (min-width: 768px) {
+		.container {
+			max-width: 730px;
+		}
+	}
+	.container-narrow > hr {
+		margin: 30px 0;
+	}
+
+	/* Main marketing message and sign up button */
+	.jumbotron {
+		text-align: center;
+		border-bottom: 1px solid #e5e5e5;
+	}
+	.jumbotron .btn {
+		padding: 14px 24px;
+		font-size: 21px;
+	}
+
+	/* Supporting marketing content */
+	.marketing {
+		margin: 40px 0;
+	}
+	.marketing p + h4 {
+		margin-top: 28px;
+	}
+
+	/* Responsive: Portrait tablets and up */
+	@media screen and (min-width: 768px) {
+		/* Remove the padding we set earlier */
+		.header,
+		.marketing,
+		.footer {
+			padding-right: 0;
+			padding-left: 0;
+		}
+		/* Space out the masthead */
+		.header {
+			margin-bottom: 30px;
+		}
+		/* Remove the bottom border on the jumbotron for visual effect */
+		.jumbotron {
+			border-bottom: 0;
+		}
+	}
+	</style>
+
+	<?php if($_SESSION['email']) { ?>
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" />
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/summernote/0.5.2/summernote.css">
+	<?php } ?>
+
+	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
 	<!--[if lt IE 9]>
-		<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+		<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 	<![endif]-->
 </head>
+
 <body>
 
-	<div class="container-narrow">
+	<div class="container">
+		<div class="header">
+			<nav>
+				<ul class="nav nav-pills pull-right">
 
-		<?php $exception = require('forum.php'); ?>
+					<li><a href="/">Home</a></li>
+					<li><a href="/?t=1">FAQ</a></li>
 
-		<div class="masthead">
-			<ul class="nav nav-pills pull-right">
-				<li><a href="/">Home</a></li>
-				<li><a href="/?t=1">FAQ</a></li>
-
-				<li>
-					<?php if($_SESSION['email']) { ?>
-						<!-- Welcome, <?php print $_SESSION['email']; ?>-->
-						<a href="#" id="logout_button">Logout</a>
-					<?php } else { ?>
-						<a href="#" id="login_button">Login</a>
-						<!-- <img src="https://browserid.org/i/sign_in_green.png" alt="Sign-in Button">-->
-					<?php } ?>
-				</li>
-			</ul>
-
-			<h3 class="muted"><a href="/" target="_self" title="Website index">Forum Five</a></h3>
+					<li>
+						<?php if($_SESSION['email']) { ?>
+							<!-- Welcome, <?= $_SESSION['email']; ?>-->
+							<a href="#" id="logout_button">Logout</a>
+						<?php } else { ?>
+							<a href="#" id="login_button">Login</a>
+							<!-- <img src="https://browserid.org/i/sign_in_green.png" alt="Sign-in Button">-->
+						<?php } ?>
+					</li>
+				</ul>
+			</nav>
+			<h3 class="text-muted"><a href="/">Forum Five</a></h3>
 		</div>
-
-		<hr>
 
 		<div class="marketing">
 
 		<?php if(! $exception instanceof Exception) { ?>
 
-			<?php if($topicID) { ?>
+			<?php if($userID) { ?>
 
-				<h3><?php print $topic['h']; ?></h3>
+				<pre><?=_r($user); ?></pre>
 
-				<p><?php print $topic['b']; ?></p>
+			<?php } elseif($topicID) { ?>
 
-				<?php if($_SESSION['admin']) {?>
-					<?php print $topic['e']; ?> - <a class="btn btn-danger" href="/?d=t&topicID=<?php print $topic['i']; ?>">delete</a>
-				<?php } ?>
+				<div class="media">
+					<a class="media-left" href="#">
+						<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+					</a>
+					
+					<div class="media-body">
+
+						<h3 class="media-heading"><?= $topic['title']; ?></h4>
+
+						<?php if($_SESSION['admin']) {?>
+							<h5 class="media-heading"><?= $topic['email']; ?> -
+							<a href="/?delete=topic&topicID=<?= $topic['id']; ?>">delete</a></h5>
+						<?php } ?>
+
+						<?= $topic['body']; ?>
+						
+					</div>
+				</div>
 
 				<hr>
 
 				<div id="comments">
 					<?php foreach($rows->fetchAll() as $row) { ?>
 
-						<div class="clearfix content-heading comment">
-							<img class="pull-left img-polaroid" src="http://www.gravatar.com/avatar/<?php echo md5($row['e']); ?>?s=40&r=g&d=mm" style="margin-right: .7em;" />
+						<div class="media">
+							<a class="media-left" href="#">
+								<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+							</a>
+							
+							<div class="media-body">
 
-							<p><?php print $row['b']; ?></p>
+								<?php if($_SESSION['admin']) {?>
+									<h4 class="media-heading"><?= $row['email']; ?> - <a href="/?delete=comment&commentID=<?= $row['id']; ?>&topicID=<?= $topic['id']; ?>">delete</a></h4>
+								<?php } ?>
 
-							<?php if($_SESSION['admin']) {?>
-								<p><?php print $row['e']; ?> - <a href="/?d=c&commentID=<?php print $row['i']; ?>&topicID=<?php print $topic['i']; ?>">delete</a></p>
-							<?php } ?>
+								<?= $row['body']; ?>
+								
+							</div>
 						</div>
 
 						<hr>
@@ -79,15 +190,16 @@
 				</div>
 
 				<?php if($_SESSION['email']) { ?>
-					<form method="post">
-						<fieldset>
-							<legend>Leave a reply</legend>
 
-							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
-
-							<input type="submit" class="btn btn-primary" value="Submit" />
-						</fieldset>
+					<form role="form" method="post">
+						<legend>Leave a Reply</legend>
+						<div class="form-group">
+							<div class="summernote"></div>
+							<textarea class="form-control" rows="7" name="body"></textarea>
+						</div>
+						<button type="submit" class="btn btn-default">Submit</button>
 					</form>
+
 				<?php } ?>
 
 			<?php } else { ?>
@@ -112,14 +224,14 @@
 					<?php foreach($rows->fetchAll() as $row) { ?>
 						<tr class="topics">
 							<td>
-								<img src="http://www.gravatar.com/avatar/<?php echo md5($row['e']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
+								<img src="http://www.gravatar.com/avatar/<?php echo md5($row['email']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
 							</td>
 							<td>
-								<a href="?topicID=<?php print $row['i']; ?>"><?php print $row['h']; ?></a><br>
+								<a href="?topicID=<?= $row['id']; ?>"><?= $row['title']; ?></a><br>
 
 
 								<?php if($_SESSION['admin']) {?>
-									<?php print $row['e']; ?> - <a href="/?d=t&topicID=<?php print $row['i']; ?>">delete</a>
+									<?= $row['email']; ?> - <a href="/?d=t&topicID=<?= $row['id']; ?>">delete</a>
 								<?php } ?>
 							</td>
 						</tr>
@@ -129,19 +241,21 @@
 				</table>
 
 				<?php if($_SESSION['email']) { ?>
-					<form method="post">
-						<fieldset>
-							<legend>Create new Topic</legend>
 
-							<label>Topic Title</label>
-							<input type="text" name="h" />
-
-							<label>Topic Text</label>
-							<textarea name="b" style="width: 100%; min-height: 150px;"></textarea>
-
-							<input type="submit" class="btn btn-primary" value="Submit" />
-						</fieldset>
+					<form role="form" method="post">
+						<legend>Create new Topic</legend>
+						<div class="form-group">
+							<label for="title">Title</label>
+							<input type="text" class="form-control" name="title">
+						</div>
+						<div class="form-group">
+							<label for="body">Body</label>
+							<div class="summernote"></div>
+							<textarea class="form-control" rows="10" name="body"></textarea>
+						</div>
+						<button type="submit" class="btn btn-default">Submit</button>
 					</form>
+
 				<?php } ?>
 
 			<?php } ?>
@@ -152,11 +266,17 @@
 				<?php if($exception->getMessage() == 'MISSING') { ?>
 					Sorry, we could not find the topic
 				<?php } elseif($exception->getMessage() == 'OFTEN') { ?>
-					Sorry, you can only post twice every <?php print WAIT / 60; ?> minutes. Please wait a few minutes.
+					Sorry, you can only post twice every <?= WAIT / 60; ?> minutes. Please wait a few minutes.
 				<?php } elseif($exception->getMessage() == 'REMOVED') { ?>
 					The topic/comment has been removed.
+				<?php } elseif($exception->getMessage() == 'EMAIL') { ?>
+					Sorry, your email provider is banned because of spam accounts.
+				<?php } elseif($exception->getMessage() == 'BANNED') { ?>
+					Sorry, your account is banned. Remember the golden rule, "So whatever you wish that others would do to you, do also to them" - Matthew 7:12
+				<?php } elseif($exception->getMessage() == 'LENGTH') { ?>
+					Sorry, your topic or comment is to long.
 				<?php } elseif($exception->getMessage() == 'HEADER') { ?>
-					You must have a topic header
+					You must have a topic header.
 				<?php } ?>
 			</div>
 
@@ -164,24 +284,31 @@
 
 		<?php //print '<pre>' . print_r($_SESSION, TRUE) . '</pre>'; ?>
 
-		</div>
-
 		<hr>
 
-		<div class="footer">
-			<p>&copy; <?php print date('Y'); ?> <?php print htmlspecialchars(getenv('HTTP_HOST')); ?> - Powered by <a href="https://github.com/Xeoncross/forumfive">forumfive</a> - <?php print $_SESSION['email']; ?></p>
-		</div>
+		<footer class="footer">
+			<p>&copy; <?= date('Y'); ?> <?= htmlspecialchars(getenv('HTTP_HOST')); ?> - Powered by <a href="https://github.com/Xeoncross/forumfive">forumfive</a> - <?= $_SESSION['email']; ?></p>
+		</footer>
 
-	</div>
+	</div> <!-- /container -->
 
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+
 	<script src="https://login.persona.org/include.js"></script>
-	<script src="assets/js/bootstrap.min.js"></script>
+
+	<!-- include libraries(jQuery, bootstrap, fontawesome) -->
+	<script type="text/javascript" src="//code.jquery.com/jquery-1.9.1.min.js"></script> 
+	
+	<?php if($_SESSION['email']) { ?>
+		<!-- Summernote editor -->
+		<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/summernote/0.5.2/summernote.min.js"></script>
+		<script src="/editor.js"></script>
+	<?php } ?>
 
 	<script>
 	$(function()
 	{
-		var currentUser = <?php print $_SESSION['email'] ? "'". $_SESSION['email'] . "'" : 'null'; ?>;
+		var currentUser = <?= $_SESSION['email'] ? "'". $_SESSION['email'] . "'" : 'null'; ?>;
 
 		navigator.id.watch({
 			loggedInUser: currentUser,
@@ -192,8 +319,19 @@
 					data: { a: assertion },
 					success: function(res, status, xhr)
 					{
-						//console.log(res);
 						window.location.href = window.location.href;
+
+						/*
+						if( ! window.location.search.contains('login')) {
+							console.log('login loop');
+							console.log(window.location.href, window.location.search);
+
+							window.location.href = window.location.pathname +
+								(window.location.search ? window.location.search + '&login=true' : '?login=true');
+							
+						}
+						*/
+
 					},
 					error: function(xhr, status, err)
 					{
@@ -205,8 +343,20 @@
 			{
 				// Delete the session cookie
 				var date = new Date();
-				document.cookie = "<?php print session_name(); ?>=; expires="+date.toGMTString()+"; path=/";
+				document.cookie = "<?= session_name(); ?>=; expires="+date.toGMTString()+"; path=/";
+				
 				window.location.href = window.location.href;
+
+				/*
+				if( ! window.location.search.contains('logout')) {
+					console.log('logout loop');
+					console.log(window.location.href, window.location.search);
+
+					window.location.href = window.location.pathname +
+						(window.location.search ? window.location.search + '&logout=true' : '?logout=true');
+					
+				}
+				*/
 			}
 		});
 
@@ -225,6 +375,12 @@
 		});
 
 	});
+
+	if (!('contains' in Array.prototype)) {
+		Array.prototype.contains = function(arr, startIndex) {
+			return ''.indexOf.call(this, arr, startIndex) !== -1;
+		};
+	}
 	</script>
 
 </body>

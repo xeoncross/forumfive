@@ -18,8 +18,22 @@ define('DB', dirname(dirname(__FILE__)) . '/database.sq3');
 // Number of seconds a user must wait to post more than two topics or comments
 define('WAIT', 180);
 
+// Number of seconds a trusted user must wait
+define('TRUSTED_WAIT', 30);
+
+// After a user has posted this many topics/comments we trust them
+define('TRUST_COUNT', 50);
+
+// Enable IP checking to stop bots (slows site)
+define('IP_CHECK', false);
+
 // List of emails for admin users
-define('ADMIN', ' you@example.com yourfriend@example.com');
+// define('ADMIN', ' you@example.com yourfriend@example.com');
+define('ADMIN', ' david@xeoncross.com yourfriend@example.com');
+
+
+// HTTP or local file for email domain blacklist (false to disable checks)
+define('EMAIL_BLACKLIST', 'https://raw.githubusercontent.com/martenson/disposable-email-domains/master/disposable_email_blacklist.conf');
 
 function db($args = array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION))
 {
@@ -27,6 +41,12 @@ function db($args = array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION))
 	$db = $db ?: (new PDO('sqlite:' . DB, 0, 0, $args));
 	return $db;
 }
+
+/*
+function one($sql, $params = NULL) {
+	return query($sql, $params)->fetch();
+}
+*/
 
 function query($sql, $params = NULL)
 {
@@ -45,7 +65,7 @@ function insert($table, $data)
 function update($table, $data, $value)
 {
 	return query("UPDATE $table SET ". join('`=?,`', array_keys($data))
-		. "=?WHERE i=?", $data + array($value))->rowCount();
+		. "=?WHERE id=?", $data + array($value))->rowCount();
 }
 
 function delete($table, $field, $value)
@@ -59,47 +79,73 @@ function filter($string)
 }
 
 session_start();
-$_SESSION += array('email' => '', 'admin' => '', 'check' => '');
+$_SESSION += array('email' => '', 'admin' => '', 'check' => '', 'posts' => 0);
 $ip = getenv('REMOTE_ADDR');
 
-if( ! $_SESSION['check'])
+if(IP_CHECK AND ! $_SESSION['check'])
 {
-	checkdnsrr(join('.',array_reverse(explode('.',$ip))).".opm.tornevall.org","A") && die('Bot');
+	checkdnsrr(join('.',array_reverse(explode('.',$ip))).".opm.tornevall.org","A") && die('Bot IP');
 	$_SESSION['check'] = 1;
 }
 
 // Append to the array: Topic ID, Topic Headline, Topic/Comment Body, Comment ID, Delete request
-extract($_REQUEST + array('topicID' => 0, 'headline' => 0, 'body' => 0, 'commentID' => 0, 'delete' => 0));
+extract($_REQUEST + array(
+	'userID' => 0, 'topicID' => 0, 'commentID' => 0, 'title' => 0, 'body' => 0, 'delete' => 0
+));
 
 if( ! is_file(DB))
 {
 	//unlink(DB);
 
 	/*
-	 * Topic: (I)D, (O) Last Modified, (C)reated Timestamp, IP (A)ddress, (E)mail, (H)eadline, (B)ody Text
-	 * Comment: (I)D, (O) Topic ID, (C)reated Timestamp, IP (A)ddress, (E)mail, (B)ody Text
+	 * (u)pdated timestamp and (c)reated timestamp
 	 */
-	query('CREATE TABLE t (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, h TEXT, b TEXT)');
-	query('CREATE TABLE c (i INTEGER PRIMARY KEY,o INTEGER,c INTEGER,a TEXT,e TEXT, b TEXT)');
+	query('CREATE TABLE topic (
+		id INTEGER PRIMARY KEY,
+		u INTEGER,
+		c INTEGER,
+		ip TEXT,
+		email TEXT,
+		title TEXT,
+		body TEXT
+	)');
+
+	query('CREATE TABLE comment (
+		id INTEGER PRIMARY KEY,
+		topic_id INTEGER,
+		c INTEGER,
+		ip TEXT,
+		email TEXT,
+		body TEXT
+	)');
+
+	query('CREATE TABLE user (
+		id INTEGER PRIMARY KEY,
+		email TEXT UNIQUE not null,
+		logins INTEGER DEFAULT 0,
+		banned INTEGER DEFAULT 0,
+		posts INTEGER DEFAULT 0,
+		c INTEGER
+	)');
 
 	for ($i=0; $i < 3; $i++)
 	{
-		$id = insert('t', array(
-			'o' => time() + $i,
+		$id = insert('topic', array(
+			'u' => time() + $i,
 			'c' => time() + WAIT + $i,
-			'a' => $ip,
-			'e' => 'user@example.com',
-			'h' => "This is a topic about $i stuff",
-			'b' => 'This is topic '. $i));
+			'ip' => $ip,
+			'email' => 'user@example.com',
+			'title' => "This is a topic about $i stuff",
+			'body' => "<p>This is topic $i</p>"));
 
 		for ($x=0; $x < 5; $x++)
 		{
-			insert('c', array(
-				'o' => $id,
+			insert('comment', array(
+				'topic_id' => $id,
 				'c' => time() + WAIT + $x,
-				'a' => $ip,
-				'e' => 'user@example.com',
-				'b' => 'This is comment '. $x));
+				'ip' => $ip,
+				'email' => 'user@example.com',
+				'body' => "<p>This is comment $x</p>"));
 		}
 
 		unset($id);
@@ -117,34 +163,103 @@ if(isset($_POST['a']))
 
 	if(($d = json_decode(curl_exec($h))) && $d->status == 'okay')
 	{
+		$emails = file(EMAIL_BLACKLIST, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+		if(in_array($d->email, $emails)) {
+			throw new Exception("EMAIL");
+		}
+
+		// Changing emails by logging in while logged in
+		if($_SESSION['email'] AND $_SESSION['email'] !== $d->email) {
+			query('UPDATE user SET email = ? WHERE email = ?', array($d->email, $_SESSION['email']));
+		}
+
+		$user = query('SELECT * FROM user WHERE email = ?', array($d->email))->fetch();
+
+		if($user) {
+
+			if($user->banned) {
+				throw new Exception("BANNED");
+			}
+
+			// We stop doing flood-limiting as much for trusted members
+			$_SESSION['posts'] = $user->posts;
+
+			query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
+
+		} else {
+
+			insert('user', array(
+				'email' => $d->email,
+				'c' => time()
+			));
+
+		}
+
+		/*
+		query('INSERT OR IGNORE INTO "user" (email, c, logins) VALUES (?,?,0)', array($d->email, time()));
+		query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
+		
+		try {
+			query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
+		} catch(Exception $e) {
+			insert('user', array('email' => $d->email, 'c' => time()));
+		}
+		
+		$sql = 'INSERT INTO "user" (email,c,u,logins) VALUES (?,?,?,1)'
+			. ' ON DUPLICATE KEY UPDATE SET u = ?, logins = (logins + 1);';
+		query($sql, array($d->email, time(), time(), time()));
+		*/
+
 		if(strpos(ADMIN, ($_SESSION['email'] = $d->email)))
 		{
 			$_SESSION['admin'] = true;
 		}
 	}
+
 	ob_end_clean();
 	die('{status:true}');
+}
+
+
+// We don't want to waste resources on every page re-loading the user record
+// Only check for banning for the account when they try to modify the site
+if($_SESSION['email'] AND ($body OR $delete)) {
+
+	$banned = query('SELECT banned FROM user WHERE email = ?', array($_SESSION['email']))->fetchColumn();
+
+	if($banned) {
+		$_SESSION['email'] = $_SESSION['admin'] = null;
+		throw new Exception("BANNED");
+	}
+
 }
 
 // Trying to delete a topic/comment?
 if($delete && $_SESSION['admin'])
 {
 	// Also delete the comments that belong to this topic
-	if($delete == 't')
+	if($delete == 'topic')
 	{
-		delete('c', 'o', $topicID);
-		delete('t', 'i', $topicID);
+		delete('comment', 'topic_id', $topicID);
+		delete('topic', 'id', $topicID);
 
 		return new Exception("REMOVED");
 	}
 	else if($commentID)
 	{
-		delete('c', 'i', $commentID);
+		delete('comment', 'id', $commentID);
 	}
 }
 
 // Fetch the topic if we are loading it
-if($topicID && !($topic = query('SELECT * FROM t WHERE i=?',$topicID)->fetch()))
+if($topicID && !($topic = query('SELECT * FROM topic WHERE id = ?', $topicID)->fetch()))
+{
+	return new Exception("MISSING");
+}
+
+// Fetch the user if we are loading them
+if($userID && !($user = query('SELECT * FROM user WHERE id = ?', $userID)->fetch()))
 {
 	return new Exception("MISSING");
 }
@@ -152,31 +267,169 @@ if($topicID && !($topic = query('SELECT * FROM t WHERE i=?',$topicID)->fetch()))
 // We are inserting a new topic or comment
 if($body && $_SESSION['email'])
 {
-	$headline = filter($headline);
+	if(mb_strlen($body) > ($topicID ? 2000 : 7000)) {
+		return new Exception('LENGTH');
+	}
+
+	$wait = WAIT;
+	// Admin's and trusted users can post more often
+	if($_SESSION['admin'] OR $_SESSION['posts'] >= TRUST_COUNT) {
+		$wait = TRUSTED_WAIT;
+	}
 
 	// Make sure they haven't posted more than twice every 3 minutes
-	if(query('SELECT COUNT(*) FROM '. ($topicID ? 'c' : 't').' WHERE a=? AND c>?', array($ip, time()-WAIT))->fetchColumn() > 2)
-	{
+	$sql = 'SELECT COUNT(*) FROM '. ($topicID ? 'comment' : 'topic').' WHERE ip = ? AND c > ?';
+	if(query($sql, array($ip, time()-$wait))->fetchColumn() > 2) {
 		return new Exception("OFTEN");
 	}
 
+	$body = DOMCleaner::purify($body);
+
 	// Assume we are inserting a topic
-	$data = array('o' => time(), 'c' => time(), 'a' => $ip, 'e' => $_SESSION['email'], 'b' => filter($body));
+	$data = array(
+		'c' => time(),
+		'ip' => $ip,
+		'email' => $_SESSION['email'],
+		'body' => $body
+	);
+
+	// print '<pre>'; print_r(get_defined_vars());
 
 	// If this is a comment, add a reference to the topic, then update the topic modified time
-	if($topicID)
-	{
-		$data['o'] = $topicID;
-		update('t', array('o' => time()), $topicID);
-	}
-	else
-	{
-		$data['h'] = filter($headline);
-		if( ! $data['h'] OR mb_strlen($data['h']) > 80) return new Exception('HEADER');
+	if($topicID) {
+	
+		$data['topic_id'] = $topicID;
+		update('topic', array('u' => time()), $topicID);
+	
+	} else {
+	
+		$data['title'] = filter($title);
+		$data['u'] = time();
+		if( ! $data['title'] OR mb_strlen($data['title']) > 80) {
+			return new Exception('HEADER');
+		}
+
 	}
 
-	insert($topicID ? 'c' : 't', $data);
+	insert($topicID ? 'comment' : 'topic', $data);
+	query('UPDATE user SET posts = (posts + 1) WHERE email = ?', $_SESSION['email']);
+	$_SESSION['posts']++;
 }
 
 // We are showing a topic
-$rows = $topicID ? query('SELECT * FROM c WHERE o=? ORDER BY o DESC', array($topicID)) : query('SELECT * FROM t ORDER BY o DESC');
+if($userID AND !empty($user)) {
+	$rows = query('SELECT * FROM comment WHERE email = ? ORDER BY id DESC LIMIT 10', array($user->email));
+} elseif($topicID) {
+	$rows = query('SELECT * FROM comment WHERE topic_id = ? ORDER BY id DESC LIMIT 100', array($topicID));
+} else {
+	$rows = query('SELECT * FROM topic ORDER BY id DESC');
+}
+
+
+/***************************END****************************/
+
+
+/**
+ * DOMCleaner
+ *
+ * Requires LIBXML / PHP DOM which is now standard in PHP
+ * @author David Pennington
+ * @url http://github.com/xeoncross
+ */
+class DOMCleaner {
+
+	public static $whitelist = array(
+		'a' => array('href'),
+		'b', 'em', 'i', 'u', 'strike', 'sup', 'sub',
+		'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+		'p', 'blockquote','pre', 'code','ul','ol','li',
+		'img' => array('src', 'alt', 'title'),
+		'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+		'br', '#text', 'html', 'body',
+
+		// Youtube, vimeo, etc...
+		'iframe' => array('src', 'class', 'allowtransparency', 'allowfullscreen', 'width', 'height', 'frameborder')
+	);
+
+
+	public static function decode($string)
+	{
+		while (strcmp($string, ($temp = html_entity_decode($string, ENT_QUOTES, 'UTF-8'))) !== 0) {
+			$string = $temp;
+		}
+
+		return $string;
+	}
+
+	public static function purify($html, array $whitelist = null, $protocols = 'http|https|ftp')
+	{
+		libxml_use_internal_errors(true) AND libxml_clear_errors();
+
+		if (is_object($html)) {
+
+			if ( ! in_array($html->nodeName, array_keys($whitelist))) {
+				$html->parentNode->removeChild($html);
+				return;
+			}
+
+			if ($html->hasChildNodes() === true) {
+
+				// Purify/Delete child elements in reverse order so we don't messup DOM tree
+				foreach (range($html->childNodes->length - 1, 0) as $i) {
+					static::purify($html->childNodes->item($i), $whitelist, $protocols);
+				}
+			}
+
+			if ($html->hasAttributes() === true) {
+
+				foreach (range($html->attributes->length - 1, 0) as $i) {
+					$attribute = $html->attributes->item($i);
+
+					if( ! $attribute->value OR ! in_array($attribute->name, $whitelist[$html->nodeName])) {
+						$html->removeAttributeNode($attribute);
+						continue;
+					}
+
+					$value = static::decode($attribute->value);
+					if(strpos($value, ':') !== false) {
+						if(preg_match('~([^:]{0,10}):~', $value, $match)) {
+							if ( ! in_array(strtolower(trim($match[1])), $protocols)) {
+								$html->removeAttributeNode($attribute);
+							}
+						}
+					}
+				}
+			}
+
+			return;
+		}
+
+		if( ! trim($html)) {
+			return;
+		}
+
+		$dom = new DomDocument();
+		if(! $dom->loadHTML($html)) {
+			return;
+		}
+		
+		if( ! $whitelist) {
+			$whitelist = static::$whitelist;
+		}
+
+		// Allow tags to be given without the "tag => array()" syntax
+		foreach ($whitelist as $tag => $attributes) {
+			if (is_int($tag)) {
+				unset($whitelist[$tag]);
+				$whitelist[$attributes] = array();
+			}
+		}
+
+		$protocols = explode('|', strtolower($protocols));
+		static::purify($dom->documentElement, $whitelist, $protocols);
+
+		return preg_replace('~<(?:!DOCTYPE|/?(?:html|body))[^>]*>\s*~i', '', $dom->saveHTML());
+	}
+
+}
+

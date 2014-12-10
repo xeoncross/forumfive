@@ -1,3 +1,4 @@
+/*
 // Returns a function, that, as long as it continues to be invoked, will not
 // be triggered. The function will be called after it stops being called for
 // N milliseconds. If `immediate` is passed, trigger the function on the
@@ -18,9 +19,9 @@ function debounce(func, wait, immediate) {
 };
 
 var updateTextarea = debounce(function(html) {
-	//console.log(html);
 	$('textarea[name=body]').val(html);
 }, 250);
+*/
 
 // Use summernote for the HTML WYSIWYG editor
 $(document).ready(function() {
@@ -28,16 +29,21 @@ $(document).ready(function() {
 	// Progressive Enhancement
 	$('textarea').hide();
 
+	$('form').on('submit', function() {
+		$('textarea[name="body"]').html($('.summernote').code());
+	});
+
 	$('.summernote').summernote({
 		styleWithSpan: false,
 		minHeight: 300, 
+		/* Not working, switching to onSubmit event
 		onkeyup: function(e) {
 			updateTextarea($('.summernote').code());
 		},
 		onblur: function(e) {
 			updateTextarea($('.summernote').code());
 		},
-		/*onChange: function(e) {
+		onChange: function(e) {
 			updateTextarea($('.summernote').code());
 		},*/
 		// Fix Microsoft Word Pastes
@@ -51,7 +57,6 @@ $(document).ready(function() {
 					.replace(/<o:p><\/o:p>/g, '')
 					.replace(/<o:p>&nbsp;<\/o:p>/g, '');
 				$(this).code('').code(newHtml);
-				updateTextarea($('.summernote').code());
 			}, 10);
 		},
 		toolbar: [

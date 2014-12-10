@@ -261,12 +261,12 @@ if($topicID && !($topic = query('SELECT * FROM topic WHERE id = ?', $topicID)->f
 // Fetch the user if we are loading them
 if($email) {
 	
-	if( ! $_SESSION['admin']) {
+	// Only admin's and the user themselves can see this page
+	if( ! $_SESSION['admin'] AND $email !== $_SESSION['email']) {
 		return new Exception('MISSING');
 	}
 
-	if(!($user = query('SELECT * FROM user WHERE email = ?', $email)->fetch()))
-	{
+	if(!($user = query('SELECT * FROM user WHERE email = ?', $email)->fetch())) {
 		return new Exception("MISSING");
 	}
 }

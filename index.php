@@ -23,6 +23,11 @@
 		padding-bottom: 20px;
 	}
 
+	img {
+		max-width: 700px;
+		max-height: 700px;
+	}
+
 	/* Everything but the jumbotron gets side spacing for mobile first views */
 	.header,
 	.marketing,
@@ -96,7 +101,7 @@
 
 	<?php if($_SESSION['email']) { ?>
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.min.css" />
-		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/summernote/0.5.2/summernote.css">
+		<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/summernote/0.6.0/summernote.css">
 	<?php } ?>
 
 	<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
@@ -139,15 +144,17 @@
 					<a href="http://www.gravatar.com/<?= md5($user['email']); ?>">
 						<img src="http://www.gravatar.com/avatar/<?= md5($user['email']); ?>?s=80&r=g&d=mm" title="Gravatar.com Image">
 					</a>
-					
+
 					<h2><?= $user['email']; ?></h2>
 					<p class="lead">Joined <?= date('D, M jS Y H:i:s', $user['c']); ?></p>
 					<p>User has <?= $user['posts']; ?> posts and has logged in <?= $user['logins']; ?> times</p>
 
-					<?php if($user['banned']) { ?>
-						<a class="btn btn-success" href="?delete=unban&email=<?= $user['email']; ?>">Un-Ban User</a>
-					<?php } else { ?>
-						<a class="btn btn-danger" href="?delete=user&email=<?= $user['email']; ?>">Ban User</a>
+					<?php if($_SESSION['admin']) { ?>
+						<?php if($user['banned']) { ?>
+							<a class="btn btn-success" href="?delete=unban&email=<?= $user['email']; ?>">Un-Ban User</a>
+						<?php } else { ?>
+							<a class="btn btn-danger" href="?delete=user&email=<?= $user['email']; ?>">Ban User</a>
+						<?php } ?>
 					<?php } ?>
 
 				</div>
@@ -278,7 +285,7 @@
 					<?php foreach($rows->fetchAll() as $row) { ?>
 						<tr class="topics">
 							<td>
-								<?php if($_SESSION['admin']) { ?>
+								<?php if($_SESSION['admin'] OR $_SESSION['email'] === $row['email']) { ?>
 									<a href="?email=<?= $row['email'];?>">
 										<img src="http://www.gravatar.com/avatar/<?php echo md5($row['email']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
 									</a>
@@ -380,7 +387,7 @@
 	
 	<?php if($_SESSION['email']) { ?>
 		<!-- Summernote editor -->
-		<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
 		<script src="//cdnjs.cloudflare.com/ajax/libs/summernote/0.5.2/summernote.min.js"></script>
 		<script src="/editor.js"></script>
 	<?php } ?>

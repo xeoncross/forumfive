@@ -31,9 +31,15 @@ $(document).ready(function() {
 	$('.summernote').summernote({
 		styleWithSpan: false,
 		minHeight: 300, 
-		onkeydown: function(e) {
+		onkeyup: function(e) {
 			updateTextarea($('.summernote').code());
 		},
+		onblur: function(e) {
+			updateTextarea($('.summernote').code());
+		},
+		/*onChange: function(e) {
+			updateTextarea($('.summernote').code());
+		},*/
 		// Fix Microsoft Word Pastes
 		onpaste: function() {
 			setTimeout(function() {
@@ -45,6 +51,7 @@ $(document).ready(function() {
 					.replace(/<o:p><\/o:p>/g, '')
 					.replace(/<o:p>&nbsp;<\/o:p>/g, '');
 				$(this).code('').code(newHtml);
+				updateTextarea($('.summernote').code());
 			}, 10);
 		},
 		toolbar: [

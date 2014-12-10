@@ -264,7 +264,7 @@
 				<?php if($exception->getMessage() == 'MISSING') { ?>
 					Sorry, we could not find the topic
 				<?php } elseif($exception->getMessage() == 'OFTEN') { ?>
-					Sorry, you can only post twice every <?= WAIT / 60; ?> minutes. Please wait a few minutes.
+					Sorry, you can only post twice every <?= ($_SESSION['trusted'] ? TRUSTED_WAIT : WAIT) / 60; ?> minutes. Please wait a few moments and then refresh the page to re-send your post.
 				<?php } elseif($exception->getMessage() == 'REMOVED') { ?>
 					The topic/comment has been removed.
 				<?php } elseif($exception->getMessage() == 'EMAIL') { ?>

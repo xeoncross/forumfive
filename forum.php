@@ -236,7 +236,7 @@ if($delete && $_SESSION['admin'])
 
 		return new Exception("REMOVED");
 	
-	if($delete == 'user') { // We don't actually delete users...
+	} elseif($delete == 'user') { // We don't actually delete users...
 		
 		query('UPDATE user SET banned = 1 WHERE email = ?', array($userID));
 

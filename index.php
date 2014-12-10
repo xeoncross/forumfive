@@ -201,7 +201,9 @@
 							<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
 						</a>
 					<?php } else { ?>
-						<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+						<a class="media-left" href="#">
+							<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+						</a>
 					<?php } ?>
 					
 					<div class="media-body">
@@ -230,7 +232,9 @@
 									<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
 								</a>
 							<?php } else { ?>
-								<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+								<a class="media-left" href="#">
+									<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+								</a>
 							<?php } ?>
 							
 							<div class="media-body">

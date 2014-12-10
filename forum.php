@@ -362,6 +362,12 @@ class DOMCleaner {
 	);
 
 
+	public static $video_sites = array(
+		//'www.dailymotion.com',
+		'www.youtube.com',
+		'player.vimeo.com'
+	);
+
 	public static function decode($string)
 	{
 		while (strcmp($string, ($temp = html_entity_decode($string, ENT_QUOTES, 'UTF-8'))) !== 0) {
@@ -401,6 +407,18 @@ class DOMCleaner {
 					}
 
 					$value = static::decode($attribute->value);
+					
+					if($attribute->name == 'src') {
+						$domain = parse_url($value, PHP_URL_HOST);
+
+						// Only EVER allow embeds from Youtube / Vimeo
+						if( ! $domain OR ! in_array($domain, static::$video_sites)) {
+							$html->removeAttributeNode($attribute);
+						}
+
+						continue;
+					}
+
 					if(strpos($value, ':') !== false) {
 						if(preg_match('~([^:]{0,10}):~', $value, $match)) {
 							if ( ! in_array(strtolower(trim($match[1])), $protocols)) {

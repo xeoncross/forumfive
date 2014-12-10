@@ -27,10 +27,11 @@ define('TRUST_COUNT', 50);
 // Enable IP checking to stop bots (slows site)
 define('IP_CHECK', false);
 
-// List of emails for admin users
-// define('ADMIN', ' you@example.com yourfriend@example.com');
-define('ADMIN', ' david@xeoncross.com yourfriend@example.com');
+// Allow new users to register (existing users can still login)
+define('ALLOW_REGISTER', true);
 
+// List of emails for admin users
+define('ADMIN', ' david@xeoncross.com yourfriend@example.com');
 
 // HTTP or local file for email domain blacklist (false to disable checks)
 define('EMAIL_BLACKLIST', 'https://raw.githubusercontent.com/martenson/disposable-email-domains/master/disposable_email_blacklist.conf');
@@ -41,12 +42,6 @@ function db($args = array(PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION))
 	$db = $db ?: (new PDO('sqlite:' . DB, 0, 0, $args));
 	return $db;
 }
-
-/*
-function one($sql, $params = NULL) {
-	return query($sql, $params)->fetch();
-}
-*/
 
 function query($sql, $params = NULL)
 {
@@ -79,7 +74,7 @@ function filter($string)
 }
 
 session_start();
-$_SESSION += array('email' => '', 'admin' => '', 'check' => '', 'posts' => 0);
+$_SESSION += array('email' => '', 'admin' => '', 'trusted' => 0, 'check' => '', 'posts' => 0);
 $ip = getenv('REMOTE_ADDR');
 
 if(IP_CHECK AND ! $_SESSION['check'])
@@ -155,6 +150,8 @@ if( ! is_file(DB))
 // Login with BrowserID
 if(isset($_POST['a']))
 {
+	sleep(1); // rate-limit
+
 	curl_setopt_array($h = curl_init('https://verifier.login.persona.org/verify'),array(
 		CURLOPT_RETURNTRANSFER=>1,
 		CURLOPT_POST=>1,
@@ -185,9 +182,18 @@ if(isset($_POST['a']))
 			// We stop doing flood-limiting as much for trusted members
 			$_SESSION['posts'] = $user->posts;
 
+			// We show emails for trusted members
+			if($_SESSION['posts'] >= TRUST_COUNT) {
+				$_SESSION['trusted'] = 1;
+			}
+
 			query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
 
 		} else {
+
+			if( ! ALLOW_REGISTER) {
+				throw new Exception("REGISTER");
+			}
 
 			insert('user', array(
 				'email' => $d->email,
@@ -195,21 +201,6 @@ if(isset($_POST['a']))
 			));
 
 		}
-
-		/*
-		query('INSERT OR IGNORE INTO "user" (email, c, logins) VALUES (?,?,0)', array($d->email, time()));
-		query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
-		
-		try {
-			query('UPDATE "user" SET logins = (logins + 1) WHERE email = ?', array($d->email));
-		} catch(Exception $e) {
-			insert('user', array('email' => $d->email, 'c' => time()));
-		}
-		
-		$sql = 'INSERT INTO "user" (email,c,u,logins) VALUES (?,?,?,1)'
-			. ' ON DUPLICATE KEY UPDATE SET u = ?, logins = (logins + 1);';
-		query($sql, array($d->email, time(), time(), time()));
-		*/
 
 		if(strpos(ADMIN, ($_SESSION['email'] = $d->email)))
 		{
@@ -232,22 +223,25 @@ if($_SESSION['email'] AND ($body OR $delete)) {
 		$_SESSION['email'] = $_SESSION['admin'] = null;
 		throw new Exception("BANNED");
 	}
-
 }
 
 // Trying to delete a topic/comment?
 if($delete && $_SESSION['admin'])
 {
 	// Also delete the comments that belong to this topic
-	if($delete == 'topic')
-	{
+	if($delete == 'topic') {
+
 		delete('comment', 'topic_id', $topicID);
 		delete('topic', 'id', $topicID);
 
 		return new Exception("REMOVED");
-	}
-	else if($commentID)
-	{
+	
+	if($delete == 'user') { // We don't actually delete users...
+		
+		query('UPDATE user SET banned = 1 WHERE email = ?', array($userID));
+
+	} else if($commentID) {
+
 		delete('comment', 'id', $commentID);
 	}
 }
@@ -274,12 +268,14 @@ if($body && $_SESSION['email'])
 	$wait = WAIT;
 	// Admin's and trusted users can post more often
 	if($_SESSION['admin'] OR $_SESSION['posts'] >= TRUST_COUNT) {
+		$_SESSION['trusted'] = true;
 		$wait = TRUSTED_WAIT;
 	}
 
 	// Make sure they haven't posted more than twice every 3 minutes
 	$sql = 'SELECT COUNT(*) FROM '. ($topicID ? 'comment' : 'topic').' WHERE ip = ? AND c > ?';
 	if(query($sql, array($ip, time()-$wait))->fetchColumn() > 2) {
+		sleep(1); // Flood control
 		return new Exception("OFTEN");
 	}
 
@@ -292,8 +288,6 @@ if($body && $_SESSION['email'])
 		'email' => $_SESSION['email'],
 		'body' => $body
 	);
-
-	// print '<pre>'; print_r(get_defined_vars());
 
 	// If this is a comment, add a reference to the topic, then update the topic modified time
 	if($topicID) {
@@ -315,6 +309,9 @@ if($body && $_SESSION['email'])
 	query('UPDATE user SET posts = (posts + 1) WHERE email = ?', $_SESSION['email']);
 	$_SESSION['posts']++;
 }
+
+// Close the file now so AJAX an use it
+session_write_close();
 
 // We are showing a topic
 if($userID AND !empty($user)) {

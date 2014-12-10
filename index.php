@@ -120,15 +120,13 @@
 					<li><a href="/">Home</a></li>
 					<li><a href="/?t=1">FAQ</a></li>
 
-					<li>
-						<?php if($_SESSION['email']) { ?>
-							<!-- Welcome, <?= $_SESSION['email']; ?>-->
-							<a href="#" id="logout_button">Logout</a>
-						<?php } else { ?>
-							<a href="#" id="login_button">Login</a>
-							<!-- <img src="https://browserid.org/i/sign_in_green.png" alt="Sign-in Button">-->
-						<?php } ?>
-					</li>
+					<?php if($_SESSION['email']) { ?>
+						<li><a href="#" id="login_button">Change Email</a></li>
+						<li><a href="#" id="logout_button">Logout</a></li>
+
+					<?php } else { ?>
+						<li><a href="#" id="login_button">Login/Register</a></li>
+					<?php } ?>
 				</ul>
 			</nav>
 			<h3 class="text-muted"><a href="/">Forum Five</a></h3>
@@ -275,6 +273,8 @@
 					Sorry, your account is banned. Remember the golden rule, "So whatever you wish that others would do to you, do also to them" - Matthew 7:12
 				<?php } elseif($exception->getMessage() == 'LENGTH') { ?>
 					Sorry, your topic or comment is to long.
+				<?php } elseif($exception->getMessage() == 'REGISTER') { ?>
+					Sorry, registration is currently disabled.
 				<?php } elseif($exception->getMessage() == 'HEADER') { ?>
 					You must have a topic header.
 				<?php } ?>
@@ -287,7 +287,22 @@
 		<hr>
 
 		<footer class="footer">
-			<p>&copy; <?= date('Y'); ?> <?= htmlspecialchars(getenv('HTTP_HOST')); ?> - Powered by <a href="https://github.com/Xeoncross/forumfive">forumfive</a> - <?= $_SESSION['email']; ?></p>
+			
+			<?php if($_SESSION['email']): ?>
+				
+				<p>Welcome <?= $_SESSION['email']; ?>, you have posted <?= $_SESSION['posts']; ?> messages.
+				<?php if(TRUST_COUNT > $_SESSION['posts']) {
+					print 'You will be a moderator after ' . (TRUST_COUNT - $_SESSION['posts']); ?> more posts.</p>
+				<?php } ?>
+
+			<?php elseif ( ! ALLOW_REGISTER): ?>
+				<p>Registration is currently disabled. Existing users can still login.</p>
+
+			<?php else: ?>
+				<p>&copy; <?= date('Y'); ?> <?= htmlspecialchars(getenv('HTTP_HOST')); ?> - Powered by <a href="https://github.com/Xeoncross/forumfive">forumfive</a></p>
+			<?php endif; ?>
+
+
 		</footer>
 
 	</div> <!-- /container -->
@@ -320,18 +335,6 @@
 					success: function(res, status, xhr)
 					{
 						window.location.href = window.location.href;
-
-						/*
-						if( ! window.location.search.contains('login')) {
-							console.log('login loop');
-							console.log(window.location.href, window.location.search);
-
-							window.location.href = window.location.pathname +
-								(window.location.search ? window.location.search + '&login=true' : '?login=true');
-							
-						}
-						*/
-
 					},
 					error: function(xhr, status, err)
 					{
@@ -344,19 +347,7 @@
 				// Delete the session cookie
 				var date = new Date();
 				document.cookie = "<?= session_name(); ?>=; expires="+date.toGMTString()+"; path=/";
-				
 				window.location.href = window.location.href;
-
-				/*
-				if( ! window.location.search.contains('logout')) {
-					console.log('logout loop');
-					console.log(window.location.href, window.location.search);
-
-					window.location.href = window.location.pathname +
-						(window.location.search ? window.location.search + '&logout=true' : '?logout=true');
-					
-				}
-				*/
 			}
 		});
 

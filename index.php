@@ -65,10 +65,6 @@
 		text-align: center;
 		border-bottom: 1px solid #e5e5e5;
 	}
-	.jumbotron .btn {
-		padding: 14px 24px;
-		font-size: 21px;
-	}
 
 	/* Supporting marketing content */
 	.marketing {
@@ -136,16 +132,70 @@
 
 		<?php if(! $exception instanceof Exception) { ?>
 
-			<?php if($userID) { ?>
+			<?php if($email) { ?>
 
-				<pre><?=_r($user); ?></pre>
+				<div class="jumbotron">
+
+					<a href="http://www.gravatar.com/<?= md5($user['email']); ?>">
+						<img src="http://www.gravatar.com/avatar/<?= md5($user['email']); ?>?s=80&r=g&d=mm" title="Gravatar.com Image">
+					</a>
+					
+					<h2><?= $user['email']; ?></h2>
+					<p class="lead">Joined <?= date('D, M jS Y H:i:s', $user['c']); ?></p>
+					<p>User has <?= $user['posts']; ?> posts and has logged in <?= $user['logins']; ?> times</p>
+
+					<?php if($user['banned']) { ?>
+						<a class="btn btn-success" href="?delete=unban&email=<?= $user['email']; ?>">Un-Ban User</a>
+					<?php } else { ?>
+						<a class="btn btn-danger" href="?delete=user&email=<?= $user['email']; ?>">Ban User</a>
+					<?php } ?>
+
+				</div>
+
+				<table class="table table-hover">
+
+					<thead>
+						<tr>
+							<th>IP</th>
+							<th>Comment</th>
+							<th>Date</th>
+						</tr>
+					</thead>
+					<tbody>
+
+					<?php foreach($rows->fetchAll() as $row) { ?>
+						<tr class="comments">
+							<td>
+								<a href="http://whatismyipaddress.com/ip/<?= $row['ip']; ?>" target="_blank"><?= $row['ip']; ?></a>
+							</td>
+							<td>
+								<a href="/?topicID=<?= $row['topic_id']; ?>">view topic</a>							
+							</td>
+							<td>
+								<?= date('D, M jS Y ga', $row['c']); ?><br>
+								<a href="/?delete=comment&commentID=<?= $row['id']; ?>&email=<?= $user['email']; ?>&topicID=<?= $row['topic_id']; ?>">delete comment</a>
+							</td>
+							<td>
+								<?= substr(strip_tags($row['body']), 0, 100); ?>
+							</td>
+						</tr>
+					<?php } ?>
+
+					</tbody>
+				</table>
+
+
 
 			<?php } elseif($topicID) { ?>
 
 				<div class="media">
-					<a class="media-left" href="#">
+					<?php if($_SESSION['admin']) { ?>
+						<a class="media-left" href="?email=<?= $topic['email'];?>">
+							<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+						</a>
+					<?php } else { ?>
 						<img src="http://www.gravatar.com/avatar/<?= md5($topic['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
-					</a>
+					<?php } ?>
 					
 					<div class="media-body">
 
@@ -167,9 +217,14 @@
 					<?php foreach($rows->fetchAll() as $row) { ?>
 
 						<div class="media">
-							<a class="media-left" href="#">
+
+							<?php if($_SESSION['admin']) { ?>
+								<a class="media-left" href="?email=<?= $topic['email'];?>">
+									<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
+								</a>
+							<?php } else { ?>
 								<img src="http://www.gravatar.com/avatar/<?= md5($row['email']); ?>?s=40&r=g&d=mm" title="Gravatar.com Image">
-							</a>
+							<?php } ?>
 							
 							<div class="media-body">
 
@@ -203,8 +258,8 @@
 			<?php } else { ?>
 
 				<div class="jumbotron">
-					<h1>Super awesome marketing speak!</h1>
-					<p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
+					<h1>It's all just talk</h1>
+					<p class="lead">This is a demonstration install of the <a href="https://github.com/Xeoncross/forumfive">ForumFive</a> PHP forum system. Please be respectful.</p>
 				</div>
 
 				<table class="table table-hover">
@@ -215,6 +270,7 @@
 						<tr>
 							<th>User</th>
 							<th>Topic</th>
+							<th>Last Activity</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -222,15 +278,24 @@
 					<?php foreach($rows->fetchAll() as $row) { ?>
 						<tr class="topics">
 							<td>
-								<img src="http://www.gravatar.com/avatar/<?php echo md5($row['email']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
+								<?php if($_SESSION['admin']) { ?>
+									<a href="?email=<?= $row['email'];?>">
+										<img src="http://www.gravatar.com/avatar/<?php echo md5($row['email']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
+									</a>
+								<?php } else { ?>
+									<img src="http://www.gravatar.com/avatar/<?php echo md5($row['email']); ?>?s=30&r=g&d=mm" class="img-polaroid" />
+								<?php } ?>
 							</td>
 							<td>
 								<a href="?topicID=<?= $row['id']; ?>"><?= $row['title']; ?></a><br>
 
 
 								<?php if($_SESSION['admin']) {?>
-									<?= $row['email']; ?> - <a href="/?d=t&topicID=<?= $row['id']; ?>">delete</a>
+									<?= $row['email']; ?> - <a href="/?delete=topic&topicID=<?= $row['id']; ?>">delete</a>
 								<?php } ?>
+							</td>
+							<td>
+								<?= date('D, M jS Y ga', $row['u']); ?>
 							</td>
 						</tr>
 					<?php } ?>
@@ -284,7 +349,7 @@
 
 		<?php //print '<pre>' . print_r($_SESSION, TRUE) . '</pre>'; ?>
 
-		<hr>
+		<br>
 
 		<footer class="footer">
 			

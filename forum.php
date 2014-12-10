@@ -85,7 +85,7 @@ if(IP_CHECK AND ! $_SESSION['check'])
 
 // Append to the array: Topic ID, Topic Headline, Topic/Comment Body, Comment ID, Delete request
 extract($_REQUEST + array(
-	'userID' => 0, 'topicID' => 0, 'commentID' => 0, 'title' => 0, 'body' => 0, 'delete' => 0
+	'email' => '', 'topicID' => 0, 'commentID' => 0, 'title' => 0, 'body' => 0, 'delete' => 0
 ));
 
 if( ! is_file(DB))
@@ -122,6 +122,8 @@ if( ! is_file(DB))
 		posts INTEGER DEFAULT 0,
 		c INTEGER
 	)');
+
+	insert('user', array('c' => time(), 'email' => 'user@example.com'));
 
 	for ($i=0; $i < 3; $i++)
 	{
@@ -163,7 +165,7 @@ if(isset($_POST['a']))
 		$emails = file(EMAIL_BLACKLIST, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
 		if(in_array($d->email, $emails)) {
-			throw new Exception("EMAIL");
+			return new Exception("EMAIL");
 		}
 
 		// Changing emails by logging in while logged in
@@ -176,7 +178,7 @@ if(isset($_POST['a']))
 		if($user) {
 
 			if($user->banned) {
-				throw new Exception("BANNED");
+				return new Exception("BANNED");
 			}
 
 			// We stop doing flood-limiting as much for trusted members
@@ -192,7 +194,7 @@ if(isset($_POST['a']))
 		} else {
 
 			if( ! ALLOW_REGISTER) {
-				throw new Exception("REGISTER");
+				return new Exception("REGISTER");
 			}
 
 			insert('user', array(
@@ -221,7 +223,7 @@ if($_SESSION['email'] AND ($body OR $delete)) {
 
 	if($banned) {
 		$_SESSION['email'] = $_SESSION['admin'] = null;
-		throw new Exception("BANNED");
+		return new Exception("BANNED");
 	}
 }
 
@@ -238,7 +240,11 @@ if($delete && $_SESSION['admin'])
 	
 	} elseif($delete == 'user') { // We don't actually delete users...
 		
-		query('UPDATE user SET banned = 1 WHERE email = ?', array($userID));
+		query('UPDATE user SET banned = 1 WHERE email = ?', array($email));
+
+	} elseif($delete == 'unban') { // We don't actually delete users...
+		
+		query('UPDATE user SET banned = 0 WHERE email = ?', array($email));
 
 	} else if($commentID) {
 
@@ -253,9 +259,16 @@ if($topicID && !($topic = query('SELECT * FROM topic WHERE id = ?', $topicID)->f
 }
 
 // Fetch the user if we are loading them
-if($userID && !($user = query('SELECT * FROM user WHERE id = ?', $userID)->fetch()))
-{
-	return new Exception("MISSING");
+if($email) {
+	
+	if( ! $_SESSION['admin']) {
+		return new Exception('MISSING');
+	}
+
+	if(!($user = query('SELECT * FROM user WHERE email = ?', $email)->fetch()))
+	{
+		return new Exception("MISSING");
+	}
 }
 
 // We are inserting a new topic or comment
@@ -314,12 +327,12 @@ if($body && $_SESSION['email'])
 session_write_close();
 
 // We are showing a topic
-if($userID AND !empty($user)) {
-	$rows = query('SELECT * FROM comment WHERE email = ? ORDER BY id DESC LIMIT 10', array($user->email));
+if($email) {
+	$rows = query('SELECT * FROM comment WHERE email = ? ORDER BY id DESC LIMIT 30', array($email));
 } elseif($topicID) {
-	$rows = query('SELECT * FROM comment WHERE topic_id = ? ORDER BY id DESC LIMIT 100', array($topicID));
+	$rows = query('SELECT * FROM comment WHERE topic_id = ? ORDER BY id ASC LIMIT 100', array($topicID));
 } else {
-	$rows = query('SELECT * FROM topic ORDER BY id DESC');
+	$rows = query('SELECT * FROM topic ORDER BY id DESC LIMIT 100');
 }
 
 

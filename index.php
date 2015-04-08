@@ -366,10 +366,11 @@
 			
 			<?php if($_SESSION['email']): ?>
 				
-				<p>Welcome <?= $_SESSION['email']; ?>, you have posted <?= $_SESSION['posts']; ?> messages.
-				<?php if(TRUST_COUNT > $_SESSION['posts']) {
-					print 'You will be a moderator after ' . (TRUST_COUNT - $_SESSION['posts']); ?> more posts.</p>
-				<?php } ?>
+				 <p>Welcome <?= $_SESSION['email']; ?>! You have made <?= $_SESSION['posts']     > 0 ? $_SESSION['posts'] : 0?> posts during this session.
+				<?php if($_SESSION['trusted']) { ?>
+					You are a trusted member.
+				<?php }?>
+
 
 			<?php elseif ( ! ALLOW_REGISTER): ?>
 				<p>Registration is currently disabled. Existing users can still login.</p>

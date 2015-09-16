@@ -408,7 +408,7 @@ class DOMCleaner {
 
 					$value = static::decode($attribute->value);
 					
-					if($attribute->name == 'src') {
+					if($html->nodeName != 'img' && $attribute->name == 'src') {
 						$domain = parse_url($value, PHP_URL_HOST);
 
 						// Only EVER allow embeds from Youtube / Vimeo
